@@ -8,7 +8,7 @@ def checkMousePosition(event, x, y, flags, param):
         print(f'x:{x} | y:{y}')
 
 # [x, y]
-illegal_area = np.array([[60, 94], [272, 153], [273, 275], [46, 222]], np.int32)
+illegal_area = np.array([[78, 0], [258, 0], [273, 275], [46, 222]], np.int32)
 
 # cv2.polylines(img, [illegal_area], True, (0, 255, 0), 1)
 # cv2.namedWindow('Parking Area')
