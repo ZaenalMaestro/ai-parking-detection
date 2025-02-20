@@ -27,11 +27,11 @@ def is_vechile(class_name):
 
     return result
 
-def setTextInFrame(frame, text):
+def setTextInFrame(frame, text, color):
     org = (50, 100) 
     font = cv2.FONT_HERSHEY_SIMPLEX
     fontScale = 1
-    color = (0, 255, 0)  # Green color
+    color = tuple(color)
     thickness = 2
 
     # Add text to the image
@@ -50,13 +50,10 @@ time_in_boudary = {
     'max_time_in_boundary': None
 }
 
-color = {
-    'green': (0, 255, 0),
-    'red': (0, 0, 255)
-}
 while True:
     ret, frame = cap.read()
-    setTextInFrame(frame, 'No illegal parking detected')
+    text_information = 'No illegal parking detected'
+    color = [0, 255, 0]
 
     results = model.predict(frame, show=False, imgsz=320)
     result = results[0]
@@ -106,15 +103,15 @@ while True:
         annotator = Annotator(frame, line_width=2, example=class_name)
         annotator.box_label(box_xyxy, class_name, (255, 0, 255), False)
 
-    if len(vechiles) > 0 and datetime.datetime.now() >= time_in_boudary.get('max_time_in_boundary'):
-        print('max time in:', time_in_boudary.get('max_time_in_boundary'))
-        print('current time:', datetime.datetime.now())
+    if len(vechiles) > 0 and time_in_boudary.get('max_time_in_boundary'):
+        if len(vechiles) > 0 and datetime.datetime.now() >= time_in_boudary.get('max_time_in_boundary'):
+            text_information = f'{len(vechiles_in_boundary)} vechiles Illegal parking detected'
+            color = [0, 0, 255]
+    else:
+        color = [0, 255, 0]
 
-        setTextInFrame(frame, f'{len(vechiles)} vechiles Illegal parking detected')
-        cv2.polylines(frame, [illegal_area], True, color.get('red'), 2)
-
-    cv2.polylines(frame, [illegal_area], True, color.get('green'), 2)
-
+    cv2.polylines(frame, [illegal_area], True, tuple(color), 2)
+    setTextInFrame(frame, text_information, color)
     cv2.namedWindow('Parking Area')
     cv2.setMouseCallback('Parking Area', checkMousePosition)
     
