@@ -34,7 +34,6 @@ while True:
     ret, frame = cap.read()
     results = model.predict(frame, show=False, imgsz=320)
     boxes = results[0].boxes.xyxy.cpu().tolist()
-    a=results[0].boxes.data
     vechiles = []
 
     if boxes:

@@ -33,17 +33,49 @@ time_in_boudary = {
 while True:
     ret, frame = cap.read()
     results = model.predict(frame, show=False, imgsz=320)
-    
-    for result in results:
-        classes = result.names
-        boxes = result.boxes
+    result = results[0]
+    vechiles = []
 
-        for box in boxes:
-            class_id = box.cls[0].item()
-            print(f'Class: {classes[class_id]}')
-            break
+    classes = result.names
+    boxes = result.boxes
 
-    break
+    for box in boxes:
+        class_id = box.cls[0].item()
+        class_name = classes[class_id]
+        box_xyxy = box.xyxy.cpu().tolist()[0]
+
+        x1 = int(box_xyxy[0])
+        y1 = int(box_xyxy[1])
+        x2 = int(box_xyxy[2])
+        y2 = int(box_xyxy[3])
+        
+        line = np.array([[x1, y2], [x1, x2]], np.int32)
+        cordinat_x=int(x1+x2)//2
+        cordinat_y=int(y1+y2)//2
+        center_object = (cordinat_x, cordinat_y)
+
+        car_in_boundary = -1
+
+        if class_name == 'car':
+            show_obj_line(frame, [cordinat_x, cordinat_y])
+            car_in_boundary = cv2.pointPolygonTest(illegal_area, center_object,False)
+            car_in_boundary = int(car_in_boundary)
+
+        if car_in_boundary >= 0:
+            if time_in_boudary.get('time_detected') is None:
+                now = datetime.datetime.now()
+                future_time = now + datetime.timedelta(seconds=10)
+                time_in_boudary.update({
+                    'time_detected': now, 
+                    'max_time_in_boundary': future_time
+                })
+
+            vechiles.append('vechiles')
+
+        cv2.namedWindow('Parking Area')
+
+        annotator = Annotator(frame, line_width=2, example=names)
+        annotator.box_label(box_xyxy, class_name, (255, 0, 255), False)
 
     cv2.namedWindow('Parking Area')
     cv2.setMouseCallback('Parking Area', checkMousePosition)
@@ -51,7 +83,7 @@ while True:
     cv2.polylines(frame, [illegal_area], True, (0, 0, 255), 2)
     cv2.namedWindow('Parking Area')
     cv2.imshow('Parking Area', frame)
-    cv2.waitKey(0)
+    # cv2.waitKey(0)
     if cv2.waitKey(25) & 0xFF == ord('q'):
         break
 
