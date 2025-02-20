@@ -3,6 +3,7 @@ import numpy as np
 from ultralytics import YOLO
 import matplotlib.pyplot as plt
 from ultralytics.utils.plotting import Annotator
+import datetime
 
 def checkMousePosition(event, x, y, flags, param):
     if event == cv2.EVENT_MOUSEMOVE :  
@@ -17,14 +18,18 @@ def show_obj_line(frame, line):
     cv2.polylines(frame, [line], True, (0, 255, 0), 5)
     cv2.namedWindow('Parking Area')
 
-model = YOLO('yolo11n.pt')
+model = YOLO('yolov8s.pt')
 names = model.names
-illegal_area = np.array([[78, 0], [258, 0], [273, 275], [46, 222]], np.int32)
+illegal_area = np.array([[538, 129], [742, 142], [794, 713], [131, 658]], np.int32)
 
-source = 'illegal-parking.mp4'
+source = 'sample-illegal-parking.mp4'
 
 cap = cv2.VideoCapture(source)
 
+time_in_boudary = {
+    'time_detected': None,
+    'max_time_in_boundary': None
+}
 while True:
     ret, frame = cap.read()
     results = model.predict(frame, show=False, imgsz=320)
@@ -48,18 +53,30 @@ while True:
             test = cv2.pointPolygonTest(illegal_area, center_object,False)
             test = int(test)
             if test >= 0:
+                if time_in_boudary.get('time_detected') is None:
+                    now = datetime.datetime.now()
+                    future_time = now + datetime.timedelta(seconds=10)
+                    time_in_boudary.update({
+                        'time_detected': now, 
+                        'max_time_in_boundary': future_time
+                    })
+
                 vechiles.append('vechiles')
 
             cv2.namedWindow('Parking Area')
 
             annotator = Annotator(frame, line_width=2, example=names)
-            identity = 'car'
-            annotator.box_label(box, identity, (0, 0, 255), False)
+            identity = 'object'
+            annotator.box_label(box, identity, (255, 0, 255), False)
 
     if not ret:
         break
 
-    print('illegal parking', len(vechiles))
+    # illegal parking check
+    if len(vechiles) > 0 and datetime.datetime.now() >= time_in_boudary.get('max_time_in_boundary'):
+        print('max time in:', time_in_boudary.get('max_time_in_boundary'))
+        print('current time:', datetime.datetime.now())
+        print('illegal parking', len(vechiles))
 
     cv2.namedWindow('Parking Area')
     cv2.setMouseCallback('Parking Area', checkMousePosition)

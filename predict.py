@@ -2,4 +2,4 @@ from ultralytics import YOLO
 
 model = YOLO('yolo11n.pt')
 
-result = model.predict('parking1.mp4', show=True, imgsz=640)
+result = model.predict('sample-illegal-parking.mp4', show=True, imgsz=640)
