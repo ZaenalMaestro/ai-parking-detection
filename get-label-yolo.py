@@ -27,6 +27,16 @@ def is_vechile(class_name):
 
     return result
 
+def setTextInFrame(frame, text):
+    org = (50, 100) 
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    fontScale = 1
+    color = (0, 255, 0)  # Green color
+    thickness = 2
+
+    # Add text to the image
+    cv2.putText(frame, text, org, font, fontScale, color, thickness)
+
 model = YOLO('yolov8s.pt')
 names = model.names
 illegal_area = np.array([[538, 129], [742, 142], [794, 713], [131, 658]], np.int32)
@@ -46,6 +56,8 @@ color = {
 }
 while True:
     ret, frame = cap.read()
+    setTextInFrame(frame, 'No illegal parking detected')
+
     results = model.predict(frame, show=False, imgsz=320)
     result = results[0]
     vechiles_in_boundary = []
@@ -94,10 +106,18 @@ while True:
         annotator = Annotator(frame, line_width=2, example=class_name)
         annotator.box_label(box_xyxy, class_name, (255, 0, 255), False)
 
+    if len(vechiles) > 0 and datetime.datetime.now() >= time_in_boudary.get('max_time_in_boundary'):
+        print('max time in:', time_in_boudary.get('max_time_in_boundary'))
+        print('current time:', datetime.datetime.now())
+
+        setTextInFrame(frame, f'{len(vechiles)} vechiles Illegal parking detected')
+        cv2.polylines(frame, [illegal_area], True, color.get('red'), 2)
+
+    cv2.polylines(frame, [illegal_area], True, color.get('green'), 2)
+
     cv2.namedWindow('Parking Area')
     cv2.setMouseCallback('Parking Area', checkMousePosition)
     
-    cv2.polylines(frame, [illegal_area], True, (255, 0, 255), 2)
     cv2.namedWindow('Parking Area')
     cv2.imshow('Parking Area', frame)
     # cv2.waitKey(0)
