@@ -18,6 +18,15 @@ def show_obj_line(frame, line):
     cv2.polylines(frame, [line], True, (0, 255, 0), 5)
     cv2.namedWindow('Parking Area')
 
+def is_vechile(class_name):
+    result = False
+    for vechile in vechiles:
+        if class_name == vechile:
+            result = True
+            break
+
+    return result
+
 model = YOLO('yolov8s.pt')
 names = model.names
 illegal_area = np.array([[538, 129], [742, 142], [794, 713], [131, 658]], np.int32)
@@ -30,11 +39,17 @@ time_in_boudary = {
     'time_detected': None,
     'max_time_in_boundary': None
 }
+
+color = {
+    'green': (0, 255, 0),
+    'red': (0, 0, 255)
+}
 while True:
     ret, frame = cap.read()
     results = model.predict(frame, show=False, imgsz=320)
     result = results[0]
-    vechiles = []
+    vechiles_in_boundary = []
+    vechiles = ['car', 'bicycle', 'bus', 'truck', 'motorcycle']
 
     classes = result.names
     boxes = result.boxes
@@ -42,6 +57,10 @@ while True:
     for box in boxes:
         class_id = box.cls[0].item()
         class_name = classes[class_id]
+
+        if not is_vechile(class_name):
+            continue
+
         box_xyxy = box.xyxy.cpu().tolist()[0]
 
         x1 = int(box_xyxy[0])
@@ -55,11 +74,9 @@ while True:
         center_object = (cordinat_x, cordinat_y)
 
         car_in_boundary = -1
-
-        if class_name == 'car':
-            show_obj_line(frame, [cordinat_x, cordinat_y])
-            car_in_boundary = cv2.pointPolygonTest(illegal_area, center_object,False)
-            car_in_boundary = int(car_in_boundary)
+        show_obj_line(frame, [cordinat_x, cordinat_y])
+        car_in_boundary = cv2.pointPolygonTest(illegal_area, center_object,False)
+        car_in_boundary = int(car_in_boundary)
 
         if car_in_boundary >= 0:
             if time_in_boudary.get('time_detected') is None:
@@ -70,17 +87,17 @@ while True:
                     'max_time_in_boundary': future_time
                 })
 
-            vechiles.append('vechiles')
+            vechiles_in_boundary.append('vechiles')
 
         cv2.namedWindow('Parking Area')
-
-        annotator = Annotator(frame, line_width=2, example=names)
+                
+        annotator = Annotator(frame, line_width=2, example=class_name)
         annotator.box_label(box_xyxy, class_name, (255, 0, 255), False)
 
     cv2.namedWindow('Parking Area')
     cv2.setMouseCallback('Parking Area', checkMousePosition)
-
-    cv2.polylines(frame, [illegal_area], True, (0, 0, 255), 2)
+    
+    cv2.polylines(frame, [illegal_area], True, (255, 0, 255), 2)
     cv2.namedWindow('Parking Area')
     cv2.imshow('Parking Area', frame)
     # cv2.waitKey(0)
