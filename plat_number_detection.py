@@ -7,11 +7,13 @@ import datetime
 from PIL import Image
 import pytesseract
 import re
+import easyocr
 
 model = YOLO('anpr-demo-model.pt')
 names = model.names
 
 source = 'anpr-demo-video.mp4'
+reader = easyocr.Reader(['en'])
 
 cap = cv2.VideoCapture(source)
 lebar = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH) / 2)
@@ -38,18 +40,19 @@ while True:
             y2 = int(box_xyxy[3])
 
             plat_number = frame[y1 : y2, x1 : x2]
-            # gray = cv2.cvtColor(plat_number, cv2.COLOR_BGR2RGB)
-            # text_plat_number = pytesseract.image_to_string(gray)
-            # text_plat_number = re.sub(r'[^\w\s]', '', text_plat_number) 
-            # string_tanpa_spasi = "".join(text_plat_number.split())
+            plat_number = cv2.cvtColor(plat_number, cv2.COLOR_BGR2RGB)
+            plat_number_text = reader.readtext(plat_number, detail=0)
 
-            # if len(string_tanpa_spasi) == 0:
-            #     continue
+            if len(plat_number_text) > 0:
+                plat_number_text = plat_number_text[0]
+            else:
+                plat_number_text = 'plat number'
+            
             annotator = Annotator(frame, line_width=2, example='names')
-            annotator.box_label(box_xyxy, 'plat number', (255, 0, 255), False)
+            annotator.box_label(box_xyxy, plat_number_text, (255, 0, 255), False)
 
-    cv2.imshow('Parking Area', frame)
-
+    cv2.imshow('tes', frame)
+    cv2.waitKey(0)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
