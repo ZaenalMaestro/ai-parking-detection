@@ -13,9 +13,11 @@ model = YOLO('anpr-demo-model.pt')
 names = model.names
 
 source = 'anpr-demo-video.mp4'
+source1 = 'plat_number_video.mp4'
+source2 = 'anpr-demo-video.mp4'
 reader = easyocr.Reader(['en'])
 
-cap = cv2.VideoCapture(source)
+cap = cv2.VideoCapture(source1)
 lebar = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH) / 2)
 tinggi = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT) / 2)
 
